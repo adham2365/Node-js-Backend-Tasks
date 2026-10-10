@@ -12,7 +12,11 @@ todoRouter.get("/", async(req, res, next) => {
 
 todoRouter.get("/:id", async(req, res, next) => {
     const todo = await getTodoById(req.params.id);
-    return res.status(200).json({data: todo});
+
+    if (todo) {
+        return res.status(200).json({data: todo});
+    }
+    return res.status(404).json("not found");
 });
 
 todoRouter.post("/", validateBody(todoSchema), async(req, res, next) => {
@@ -26,14 +30,19 @@ todoRouter.post("/", validateBody(todoSchema), async(req, res, next) => {
 todoRouter.patch("/:id", validateBody(todoSchema.partial()), async(req, res, next) => {
     const todo = await updateTodo(req.params.id, req.body);
     
-    if(todo){
-        return res.status(200).json({
-            message: "todo got updated successfully",
-            data: todo
-        });
+    // id not found
+    if (!todo.idExists) {
+        return res.status(404).json("not found");
+        
+    // check if body is empty
+    } else if(todo.bodyIsEmpty){
+        return res.status(422).json({error: "no values entered"});
     }
 
-    return res.status(422).json({error: "no values entered"});
+    return res.status(200).json({
+        message: "todo got updated successfully",
+        data: todo.data
+    });
 });
 
 todoRouter.delete("/:id", async(req, res, next) => {
@@ -43,5 +52,5 @@ todoRouter.delete("/:id", async(req, res, next) => {
         return res.status(404).json("not found");
     }
     
-    return res.status(204).json({message: "todo got deleted successfully"});
+    return res.status(204).end();
 });

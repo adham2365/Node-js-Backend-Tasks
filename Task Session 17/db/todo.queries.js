@@ -22,6 +22,8 @@ export async function updateTodo(id, body) {
     const columns = ['title', 'body', 'created_at', 'done'];
     const fields = [];
     const values = [];
+    let idExists = true;
+    let bodyIsEmpty = false;
     let index = 1;
 
     // check which column to update
@@ -34,16 +36,24 @@ export async function updateTodo(id, body) {
     
     // check if no updates
     if (fields.length === 0) {
-        return undefined;
+        bodyIsEmpty = true;
     }
 
     values.push(id);
     
     const res = await pool.query(`update todo set ${fields.join(", ")} where id = $${index} returning *`, values);
-    return res.rows[0];
+    
+    // check if todo exists
+    if (res.rowCount == 0) {
+        idExists = false;
+    }
+    
+    return {data: res.rows[0], bodyIsEmpty: bodyIsEmpty, idExists: idExists};
 }
 
 export async function deleteTodoById(id) {
     const res = await pool.query("delete from todo where id = $1", [id]);
+    console.log(res);
+    
     return res.rowCount > 0;
 }
