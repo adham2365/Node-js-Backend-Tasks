@@ -16,7 +16,7 @@ todoRouter.get("/:id", async(req, res, next) => {
     if (todo) {
         return res.status(200).json({data: todo});
     }
-    return res.status(404).json("not found");
+    return res.status(404).json({error: "not found"});
 });
 
 todoRouter.post("/", validateBody(todoSchema), async(req, res, next) => {
@@ -32,7 +32,7 @@ todoRouter.patch("/:id", validateBody(todoSchema.partial()), async(req, res, nex
     
     // id not found
     if (!todo.idExists) {
-        return res.status(404).json("not found");
+        return res.status(404).json({error: "id not found"});
         
     // check if body is empty
     } else if(todo.bodyIsEmpty){
@@ -49,7 +49,7 @@ todoRouter.delete("/:id", async(req, res, next) => {
     const result = await deleteTodoById(req.params.id);
 
     if(!result){
-        return res.status(404).json("not found");
+        return res.status(404).json({error: "not found"});
     }
     
     return res.status(204).end();
