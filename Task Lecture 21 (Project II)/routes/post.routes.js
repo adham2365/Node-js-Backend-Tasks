@@ -5,16 +5,11 @@ import { uploadImage } from "../middleware/upload.js";
 import { validateBody } from "../middleware/validateBody.js";
 import { insertCommentSchema, insertPostSchema } from "../validation-schemas/posts .js";
 import { createComment } from "../queries/comment.queries.js";
-// import { db } from "../db/index.js";
-// import { comments, likes, posts } from "../db/schema.js";
 
 export const postRouter = express.Router();
 
 postRouter.get("/", isAuthenticated, async (req, res) => {
     const data = await getAllPosts(req.session.userId);
-// await db.delete(likes);
-// await db.delete(comments);
-// await db.delete(posts);
 
     return res.status(200).json({ data });
 });
