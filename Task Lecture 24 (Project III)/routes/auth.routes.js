@@ -32,7 +32,7 @@ authRouter.post("/register", uploadOne("image"), validateBody(registerSchema), a
     const password_hash = await bcrypt.hash(req.body.password, 10);
 
     const currentUser = await User.register(req, password_hash);
-
+console.log("Registered user:", currentUser);
     return res.status(201).json({
         message: "register successful, you can now login",
         data: {
@@ -48,7 +48,7 @@ authRouter.post("/register", uploadOne("image"), validateBody(registerSchema), a
     });
 });
 
-authRouter.post("/login", uploadOne("image"), validateBody(loginSchema), async (req, res) => {
+authRouter.post("/login", validateBody(loginSchema), async (req, res) => {
     const currentUser = await User.checkUserByEmail(req.body.email);
     if(!currentUser){
         return res.status(401).json({ error: "invalid email or password" });
@@ -141,11 +141,14 @@ authRouter.post("/reset-password", validateBody(resetPasswordSchema), async (req
 
 authRouter.get("/me", async (req, res) => {
     const currentUser = await User.me(req.session.userId);
-    
+
     return res.status(200).json({
         data: { 
             user: {
-                ...currentUser,
+                _id: currentUser._id,
+                username: currentUser.username,
+                email: currentUser.email,
+                image: currentUser.image,
                 updatedAt: new Date().toISOString()
             }
         }
