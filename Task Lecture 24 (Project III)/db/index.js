@@ -1,0 +1,9 @@
+import mongoose from "mongoose";
+
+process.loadEnvFile();
+
+main().catch(err => console.log(err));
+
+async function main() {
+  await mongoose.connect(process.env.MONGODB_URL);
+}

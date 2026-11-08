@@ -1,0 +1,24 @@
+{
+  "name": "movie-template",
+  "version": "1.0.0",
+  "description": "Template for movie app project (HTML pages only)",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch index.js"
+  },
+  "keywords": [],
+  "author": "eyad",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "connect-mongo": "^6.0.0",
+    "express": "^5.3.0",
+    "express-session": "^1.19.0",
+    "mongoose": "^9.11.4",
+    "multer": "^2.5.0",
+    "nodemailer": "^10.3.1",
+    "uuid": "^14.0.3",
+    "zod": "^4.6.7"
+  }
+}
