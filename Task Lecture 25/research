@@ -1,0 +1,305 @@
+1. Introduction to Software Design Principles
+
+Modern object-oriented software design prioritizes maintainability, testability, and adaptability in the face of evolving business requirements. As software systems scale, hardcoded dependencies and monolithic class structures lead to tight coupling, where a change in one component ripples unpredictably across the system.
+
+To mitigate these challenges, software architecture relies on fundamental principles such as high cohesion, loose coupling, and the Dependency Inversion Principle (DIP). DIP dictates that high-level modules should not depend on low-level modules; both should depend on abstractions. Furthermore, abstractions should not depend on details; details should depend on abstractions.
+
+2. Dependency Injection (DI)
+
+2.1 Core Concepts and Mechanics
+
+Dependency Injection is a software design pattern that implements Inversion of Control (IoC) for resolving object dependencies. In traditional programming, a class constructs its own dependencies internally using direct instantiation. Dependency Injection shifts this responsibility outward: an external entity (an injector or framework container) supplies the required dependencies to the client object.
+
+Dependency Injection architecture consists of four primary roles:
+
+1. Client: The class or component that requires external services to perform its operations.
+2. Service: The dependency or interface that provides specific functionality to the client.
+3. Interface: The abstraction contract implemented by the service, ensuring the client remains decoupled from concrete implementations.
+4. Injector: The external assembler or framework container responsible for constructing service instances and binding them to the client.
+
+2.2 Variants of Dependency Injection
+
+Dependency Injection is primarily implemented through three mechanisms:
+
+* Constructor Injection: Dependencies are provided through the client class constructor. This is the preferred approach as it ensures the client object is created in a valid, fully initialized state with immutable dependencies.
+* Setter Injection: Dependencies are delivered via public setter methods. This approach offers flexibility for optional dependencies or re-initialization.
+* Interface Injection: The client implements an interface that defines a method for accepting dependencies. The injector uses this interface to supply the required service.
+
+2.3 Architectural Benefits
+
+* Enhanced Testability: Enables seamless unit testing by allowing developers to inject mock or stub dependencies rather than making actual network or database calls.
+* Loose Coupling: Clients depend strictly on abstract interfaces rather than concrete implementations, allowing underlying services to be swapped without altering client code.
+* Improved Maintainability & Reusability: Centralizes object construction logic, reducing code duplication and streamlining application configuration.
+
+2.4 Practical Implementation Example
+
+The following example demonstrates the transformation from tightly coupled code to decoupled Constructor Dependency Injection for an order processing system.
+
+==================================================
+Tightly Coupled Implementation (Anti-Pattern)
+==================================================
+class StripePaymentGateway {
+  charge(amount) {
+    console.log(`Charging $${amount} via Stripe.`);
+  }
+}
+
+class OrderProcessor {
+  constructor() {
+    // Tight coupling: OrderProcessor directly instantiates a concrete dependency
+    this._paymentGateway = new StripePaymentGateway();
+  }
+
+  process(amount) {
+    this._paymentGateway.charge(amount);
+  }
+}
+
+==================================================
+Decoupled Implementation via Constructor Injection
+==================================================
+// Abstraction Contract
+class PaymentGateway {
+  processPayment(amount) {
+    throw new Error("processPayment() must be implemented");
+  }
+}
+
+// Concrete Implementation 1
+class StripePaymentGateway extends PaymentGateway {
+  processPayment(amount) {
+    console.log(`Processing $${amount} via Stripe API.`);
+    return true;
+  }
+}
+
+// Concrete Implementation 2
+class PayPalPaymentGateway extends PaymentGateway {
+  processPayment(amount) {
+    console.log(`Processing $${amount} via PayPal API.`);
+    return true;
+  }
+}
+
+// Mock Implementation for Testing
+class MockPaymentGateway extends PaymentGateway {
+  processPayment(amount) {
+    console.log(`Mock payment of $${amount} succeeded.`);
+    return true;
+  }
+}
+
+// Decoupled Client Class
+class OrderProcessor {
+  constructor(paymentGateway) {
+    // Dependency is injected via constructor
+    if (paymentGateway == null) {
+      throw new TypeError("paymentGateway is required");
+    }
+    this._paymentGateway = paymentGateway;
+  }
+
+  completeOrder(amount) {
+    const success = this._paymentGateway.processPayment(amount);
+    if (success) {
+      console.log("Order completed successfully.");
+    }
+  }
+}
+
+3. The Strategy Pattern
+
+3.1 Intent and Mechanism
+
+The Strategy Pattern defines a family of algorithms, encapsulates each algorithm in a separate class, and makes them interchangeable at runtime. It enables the algorithm to vary independently of clients that use it.
+
+By abstracting behavioral variations behind a common interface, the Strategy Pattern enforces the Open/Closed Principle (OCP): classes remain open for extension (adding new strategies) but closed for modification (existing client logic remains untouched).
+
+3.2 Structural Components
+
+* Strategy Interface: Declares an interface common to all supported algorithms.
+* Concrete Strategies: Implement specific variations of the algorithm interface.
+* Context: Maintains a reference to a Strategy object and delegates algorithmic execution to the configured strategy.
+
+3.3 Practical Implementation Example
+
+Consider an e-commerce checkout system where shipping costs must be calculated dynamically based on carrier strategies (e.g., FedEx, UPS, DHL).
+
+// Strategy "Interface" (base class enforcing the contract)
+class ShippingStrategy {
+  calculateShippingCost(orderWeightKg, distanceKm) {
+    throw new Error("calculateShippingCost() must be implemented");
+  }
+}
+
+// Concrete Strategy A: FedEx
+class FedExShippingStrategy extends ShippingStrategy {
+  calculateShippingCost(orderWeightKg, distanceKm) {
+    return orderWeightKg * 1.5 + distanceKm * 0.05 + 10.0;
+  }
+}
+
+// Concrete Strategy B: UPS
+class UPSShippingStrategy extends ShippingStrategy {
+  calculateShippingCost(orderWeightKg, distanceKm) {
+    return orderWeightKg * 1.2 + distanceKm * 0.08 + 5.0;
+  }
+}
+
+// Concrete Strategy C: DHL Express
+class DHLShippingStrategy extends ShippingStrategy {
+  calculateShippingCost(orderWeightKg, distanceKm) {
+    return orderWeightKg * 2.0 + distanceKm * 0.1 + 15.0;
+  }
+}
+
+// Context Class
+class OrderShippingContext {
+  constructor(initialStrategy) {
+    this.shippingStrategy = initialStrategy;
+  }
+
+  setStrategy(newStrategy) {
+    this.shippingStrategy = newStrategy;
+  }
+
+  computeTotal(weight, distance) {
+    return this.shippingStrategy.calculateShippingCost(weight, distance);
+  }
+}
+
+4. The Observer Pattern
+
+4.1 Intent and Mechanism
+
+The Observer Pattern defines a one-to-many dependency between objects such that when one object (the Subject or Publisher) changes state, all its registered dependents (Observers or Subscribers) are notified and updated automatically.
+
+This pattern promotes loose coupling: the Publisher maintains a list of Observers conforming to an abstract interface without needing explicit knowledge of concrete observer implementations.
+
+4.2 Structural Components
+
+* Subject Interface: Provides methods to attach, detach, and notify observer objects.
+* Concrete Subject: Stores state of interest and broadcasts notifications to registered observers upon state alterations.
+* Observer Interface: Defines the update contract called by subjects when state changes.
+* Concrete Observers: Implement the update logic to maintain consistency with the Subject's state.
+
+4.3 Practical Implementation Example
+
+An e-commerce order management system broadcasts order status changes to multiple notification services (Email, SMS, Audit Logging).
+
+// Observer "Interface" (base class enforcing the contract)
+class OrderObserver {
+  onOrderStatusChanged(orderId, newStatus) {
+    throw new Error("onOrderStatusChanged() must be implemented");
+  }
+}
+
+// Subject "Interface"
+class OrderSubject {
+  
+  // attach
+  registerObserver(observer) {
+    throw new Error("registerObserver() must be implemented");
+  }
+  
+  // detach
+  removeObserver(observer) {
+    throw new Error("removeObserver() must be implemented");
+  }
+  
+  // notify
+  notifyObservers(orderId, newStatus) {
+    throw new Error("notifyObservers() must be implemented");
+  }
+}
+
+// Concrete Subject
+class OrderTracker extends OrderSubject {
+  observers = [];
+
+  registerObserver(observer) {
+    if (!this.observers.includes(observer)) {
+      this.observers.push(observer);
+    }
+  }
+
+  removeObserver(observer) {
+    const index = this.observers.indexOf(observer);
+    if (index !== -1) {
+      this.observers.splice(index, 1);
+    }
+  }
+
+  notifyObservers(orderId, newStatus) {
+    for (const observer of this.observers) {
+      observer.onOrderStatusChanged(orderId, newStatus);
+    }
+  }
+
+  updateStatus(orderId, newStatus) {
+    console.log(`OrderTracker: Order [${orderId}] changed status to '${newStatus}'.`);
+    this.notifyObservers(orderId, newStatus);
+  }
+}
+
+// Concrete Observer A: Email Service
+class EmailNotificationObserver extends OrderObserver {
+  onOrderStatusChanged(orderId, newStatus) {
+    console.log(`EmailObserver: Sending email notification for Order [${orderId}] -> ${newStatus}`);
+  }
+}
+
+// Concrete Observer B: SMS Service
+class SMSNotificationObserver extends OrderObserver {
+  onOrderStatusChanged(orderId, newStatus) {
+    console.log(`SMSObserver: Sending SMS text alert for Order [${orderId}] -> ${newStatus}`);
+  }
+}
+
+5. The Singleton Pattern
+
+5.1 Intent and Mechanism
+
+The Singleton Pattern ensures that a class has only one instance in memory and provides a global point of access to that instance. It restricts class instantiation to a single object, typically used to manage shared system resources such as database connection pools, application configuration settings, or thread pools.
+
+5.2 Key Implementation Elements
+
+1. Private Constructor: Prevents direct external instantiation via new.
+2. Private Static Instance Variable: Holds the single created instance of the class.
+3. Public Static Accessor Method: Provides global access to the instance, ensuring lazy initialization and thread safety.
+
+5.3 Thread Safety Considerations
+
+In multi-threaded environments, naive Singleton implementations can lead to race conditions where multiple threads instantiate separate objects simultaneously. Robust Singleton implementations utilize double-checked locking or thread-safe lazy initialization.
+
+5.4 Practical Implementation Example
+
+Below is a thread-safe (single thread) Singleton implementation in js using lazy initialization.
+
+// Module-private state (not exported, so unreachable from outside)
+let _instance = null;
+const _constructorToken = Symbol("DatabaseConnectionManager.private");
+
+class DatabaseConnectionManager {
+  // "Private" constructor: only code holding the token can call it
+  constructor(token) {
+    if (token !== _constructorToken) {
+      throw new Error("Use DatabaseConnectionManager.instance");
+    }
+    console.log("Initializing Database Connection Pool...");
+  }
+
+  // Public static access point with lazy initialization
+  static get instance() {
+    if (_instance === null) {
+      _instance = Object.freeze(new DatabaseConnectionManager(_constructorToken));
+    }
+    return _instance;
+  }
+
+  executeQuery(sqlQuery) {
+    console.log(`Executing query on shared DB instance: ${sqlQuery}`);
+  }
+}
+
+export default DatabaseConnectionManager;
